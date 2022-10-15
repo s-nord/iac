@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+spec:
+  rules:
+  - host: nginx.134.209.135.72.nip.io
+    http:
+      paths:
+      - backend:
+          serviceName: svc-internal
+          servicePort: 80
+  tls:
+  - hosts:
+    - nginx.134.209.135.72.nip.io
+    secretName: ingress-nginx-cert

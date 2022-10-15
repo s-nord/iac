@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: wordpress-ingress
+  namespace: enviroment
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+spec:
+  rules:
+  - host: wordpress.enviroment.134.209.135.190.nip.io
+    http:
+      paths:
+      - backend:
+          serviceName: wordpress-svc
+          servicePort: 80
+  tls:
+  - hosts:
+    - wordpress.enviroment.134.209.135.190.nip.io
+    secretName: ingress-wordpress-cert

@@ -1,0 +1,10 @@
+[
+	{
+    "name": "Speedtest Demo Server (Helsinki)",
+    "server" :"//speedtest.ic.uz.ua/",		
+		"dlURL" :"/backend/garbage.php",
+		"ulURL" :"/backend/empty.php",
+		"pingURL" :"/backend/empty.php",
+		"getIpURL" :"/backend/getIP.php"
+	}
+]

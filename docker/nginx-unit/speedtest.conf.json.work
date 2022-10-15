@@ -1,0 +1,34 @@
+{
+  "listeners": {
+    "*:8300": {
+      "pass": "routes"
+    }
+  },
+
+  "routes": [
+    {
+      "match": {
+        "uri": "*.js"
+      },
+      "action": {
+        "share": "/speedtest/"
+      }
+    },
+    {
+      "match": {
+        "uri": "/"
+      },
+      "action": {
+        "pass": "applications/speedtest"
+      }
+    }
+  ],
+
+  "applications": {
+    "speedtest": {
+      "type": "php",
+      "root": "/speedtest",
+      "index": "frontend.php"
+    }
+  }
+}

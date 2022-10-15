@@ -1,0 +1,49 @@
+version: '3.9'
+services:
+  app:
+    build:
+      context: ./speedtest
+      args:
+          - NGINX_UNIT_VERSION=$NGINX_UNIT_VERSION
+    container_name: app
+    restart: unless-stopped
+    # ports:
+    #   - 127.0.0.1:8300:8300
+    environment:
+      - TITLE="Rebrain Speedtest"
+      - MODE="frontend"
+      - PASSWORD="rebrain"
+      - TELEMETRY="true"
+      - ENABLE_ID_OBFUSCATION="true"
+      - REDACT_IP_ADDRESSES="false"
+    volumes:
+      # - ./nginx-unit/phpinfo.php:/app/phpinfo.php:ro
+      - ./nginx-unit/speedtest.conf.json:/docker-entrypoint.d/speedtest.conf.json:ro
+      - ./speedtest/docker/servers.json.helsinki:/servers.json:ro
+      - sqlite_data:/data
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: 127.0.0.1:24224
+        tag: app
+
+  caddy:
+    depends_on:
+      - app
+    image: caddy:${CADDY_VERSION}
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:8080:8080
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data:rw
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: 127.0.0.1:24224
+        tag: caddy
+
+volumes:
+  caddy_data: {}
+  sqlite_data: {}

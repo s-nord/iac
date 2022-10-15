@@ -1,0 +1,15 @@
+{
+  "listeners": {
+    "*:8300": {
+      "application": "speedtest"
+    }
+  },
+
+  "applications": {
+    "speedtest": {
+      "type": "php",
+      "root": "/speedtest",
+      "index": "standalone.php"
+    }
+  }
+}

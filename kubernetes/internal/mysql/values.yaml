@@ -1,0 +1,16 @@
+pvc:
+  name: mysql-data
+  storageclass: nfs-client
+  storage: 300Mi
+
+deploy:
+  replicaCount: 1
+  name: mysql-dp
+  label: mysql
+  container:
+    name: mysql
+    image: mysql:8.0.29
+    root_password: 12345678
+    database: wordpress
+  volume:
+    name: mysql-volume

@@ -1,0 +1,7 @@
+{
+  "account": "sergei.north@gmail.com",
+  "date": "2021-11-21T14:00:00)",
+  "database": "sqlite",
+  "proxy": "caddy",
+  "base_image": "nginx-unit"
+}

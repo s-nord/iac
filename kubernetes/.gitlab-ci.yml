@@ -1,0 +1,43 @@
+image: docker:20.10.17
+
+stages:
+  - deploy
+
+.deploy_template:
+  stage: deploy
+  image: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:deployer-fedora
+  script:
+    # Setup Kubeconfig
+    - mkdir -p $HOME/.kube
+    - cat $KUBECONFIG > $HOME/.kube/config
+    # Setup GPG for Helm secrets
+    - gpg --allow-secret-key-import --import $HELM_SECRET
+    # - cat $HELM_SECRET
+    # - sops --version
+    # - sops -d internal/secrets.wordpress.yaml
+
+    # Get IP
+    - external_ip=$(kubectl -n ingress-nginx get service/ingress-nginx-controller | tail -1|  awk '{print $4}')
+
+    # Deploy via Helm
+    - cd internal/
+    - cp -f ingress/ingress.wordpress.tpl wordpress/templates/ingress.yaml
+    - sed -i "s/xxx.xxx.xxx.xxx/$external_ip/g" wordpress/templates/ingress.yaml
+    - sed -i "s/enviroment/${CI_ENVIRONMENT_NAME}/g" wordpress/templates/ingress.yaml
+    # - cat wordpress/templates/ingress.yaml
+    - helm secrets upgrade --wait --install service --create-namespace --namespace ${CI_ENVIRONMENT_NAME} --values secrets.wordpress.yaml wordpress
+
+    # URL
+    - echo https://wordpress.${CI_ENVIRONMENT_NAME}.$external_ip.nip.io
+
+dev deploy:
+  extends: .deploy_template
+  environment:
+    name: dev
+  when: manual
+
+prod deploy:
+  extends: .deploy_template
+  environment:
+    name: prod
+  when: manual

@@ -1,0 +1,62 @@
+version: '3.9'
+services:
+  elasticsearch:
+    depends_on:
+      - fluentd
+    image: elasticsearch:${ELASTICSEARCH_VERSION}
+    container_name: elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: 127.0.0.1:24224
+        tag: elasticsearch
+
+  kibana:
+    depends_on:
+      - elasticsearch
+      - fluentd
+    image: kibana:${KIBANA_VERSION}
+    container_name: kibana
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:5601:5601
+    environment:
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      SERVER_NAME: kibana.local
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: 127.0.0.1:24224
+        tag: kibana
+
+  fluentd:
+    build:
+      context: ./fluentd
+      args:
+          - FLUENTD_VERSION=$FLUENTD_VERSION
+    container_name: fluentd
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:24224:24224
+      # - target: 24224
+      #   published: 24224
+      #   protocol: tcp
+      #   mode: host
+    entrypoint: /usr/bin/fluentd -c /fluentd/etc/fluent.conf -o /fluentd/log/fluentd.log --log-rotate-age 5 --log-rotate-size 10485760
+    environment:
+      ELASTICSEARCH_HOST: $ELASTICSEARCH_HOST
+      ELASTICSEARCH_PORT: $ELASTICSEARCH_PORT
+    volumes:
+      - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf
+      - fluentd_log:/fluentd/log
+
+volumes:
+  elasticsearch_data: {}
+  fluentd_log: {}

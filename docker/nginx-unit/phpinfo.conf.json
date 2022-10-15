@@ -1,0 +1,17 @@
+{
+  "listeners": {
+    "*:8300": {
+      "application": "phpinfo"
+    }
+  },
+
+  "applications": {
+    "phpinfo": {
+      "type": "php",
+      "root": "/app",
+      "user": "root",
+      "group": "root",
+      "index": "phpinfo.php"
+    }
+  }
+}

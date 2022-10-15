@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deploy.name }}
+spec:
+  replicas: {{ .Values.deploy.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.deploy.label }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deploy.label }}
+    spec:
+      containers:
+        - name: {{ .Values.deploy.container.name }}
+          image: {{ .Values.deploy.container.image }}
+          env:
+            - name: WORDPRESS_DB_HOST
+              value: "{{ .Values.deploy.container.db_host }}"
+            - name: WORDPRESS_DB_USER
+              value: "{{ .Values.deploy.container.db_user }}"
+            - name: WORDPRESS_DB_PASSWORD
+              value: "{{ .Values.deploy.container.db_password }}"
+            - name: WORDPRESS_DB_NAME
+              value: "{{ .Values.deploy.container.db_name }}"
+          volumeMounts:
+            - name: {{ .Values.deploy.volume.name }}
+              mountPath: /var/www/html/wp-content/uploads
+      volumes:
+        - name: {{ .Values.deploy.volume.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.pvc.name }}

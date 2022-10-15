@@ -1,0 +1,55 @@
+{
+  "listeners": {
+    "*:8300": {
+      "pass": "routes"
+    }
+  },
+
+  "routes": [
+    {
+      "match": {
+        "uri": "*.js"
+      },
+      "action": {
+        "share": "/speedtest/"
+      }
+    },
+
+    {
+      "match": {
+        "uri": [
+          "/stats",
+          "/stats.php*"
+        ]
+      },
+      "action": {
+        "pass": "applications/speedtest/stats"
+      }
+    },
+
+    {
+      "match": {
+        "uri": "/"
+      },
+      "action": {
+        "pass": "applications/speedtest/index"
+      }
+    }
+  ],
+
+  "applications": {
+    "speedtest": {
+      "type": "php",
+      "targets": {
+        "index": {
+          "root": "/speedtest/",
+          "script": "frontend.php"
+        },
+        "stats": {
+          "root": "/speedtest/results/",
+          "script": "stats.php"
+        }
+      }
+    }
+  }
+}
