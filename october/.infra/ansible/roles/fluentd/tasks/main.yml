@@ -1,0 +1,34 @@
+- name: Install fluentd
+  shell: |
+    curl -L https://toolbelt.treasuredata.com/sh/install-ubuntu-bionic-td-agent4.sh | sh
+    /opt/td-agent/bin/fluent-gem install fluent-plugin-gelf-hs
+    /opt/td-agent/bin/fluent-gem install fluent-plugin-systemd -v 1.0.3
+  args:
+    creates: /usr/sbin/td-agent
+
+- name: Copy fluentd config
+  template:
+    src: td-agent.{{ ansible_hostname }}.conf
+    dest: /etc/td-agent/td-agent.conf
+  notify: restart fluentd
+  tags: config
+
+- name: Run td-agent under root user
+  replace:
+    path: /lib/systemd/system/td-agent.service
+    regexp: 'User=td-agent'
+    replace: 'User=root'
+  notify: restart fluentd
+
+- name: Run td-agent under root group
+  replace:
+    path: /lib/systemd/system/td-agent.service
+    regexp: 'Group=td-agent'
+    replace: 'Group=root'
+  notify: restart fluentd  
+
+- name: Start & enable fluentd daemon
+  systemd:
+    name: td-agent
+    state: started
+    enabled: yes

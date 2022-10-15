@@ -1,0 +1,37 @@
+---
+# Enviroment
+# enviroment: vagrant # Vagrant
+# public_interface: eth1 # Vagrant
+# private_interface: eth2 # Vagrant
+
+enviroment: terraform # Terraform
+public_interface: eth0 # DigitalOcean
+private_interface: eth1 # DigitalOcean
+
+dns_zone: nip.io
+# dns_zone: devops.rebrain.srwx.net
+
+# Logging
+elasticsearch_version: 6.8.20
+mongodb_version: 4.0
+graylog_version: 3.3
+
+# Monitoring
+prometheus_version: 2.28.1
+node_exporter_version: 1.2.0
+grafana_version: 8.1.5
+
+# App
+app: october
+app_repo: git@gitlab.rebrainme.com:devops_users_repos/330/october.git
+go_version: 1.17.1
+go_path: /go
+php_version: 7.2
+
+postgres_version: 13
+postgres_db: october
+postgres_user: october
+
+# CI/CD
+cicd_user: gitlab-runner
+cicd_home: /home/gitlab-runner

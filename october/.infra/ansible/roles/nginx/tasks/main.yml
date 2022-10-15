@@ -1,0 +1,58 @@
+- name: Install nginx & letsencrypt
+  apt:
+    pkg:
+      - nginx
+      - letsencrypt
+
+- name: Create acme directory
+  file:
+    path: /opt/www/acme
+    state: directory
+
+- name: Copy nginx config
+  template:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+  notify: reload nginx
+  tags: config
+
+- name: Copy nginx conf.d configs
+  template:
+    src: "{{ item }}.conf"
+    dest: "/etc/nginx/conf.d/{{ item }}.conf"
+  with_items:
+    - app
+    - grafana
+  notify: reload nginx
+  tags: config
+
+- name: Restart nginx daemon
+  systemd:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+- name: Get certificate for app
+  shell: letsencrypt certonly --webroot -w /opt/www/acme -d app.{{ nipio_ip }}.{{ dns_zone }} --agree-tos -m sergei.north@gmail.com -n
+
+- name: Get certificate for grafana
+  shell: letsencrypt certonly --webroot -w /opt/www/acme -d grafana.{{ nipio_ip }}.{{ dns_zone }} --agree-tos -m sergei.north@gmail.com -n
+
+- name: Copy nginx conf.d ssl
+  template:
+    src: "{{ item }}.conf"
+    dest: "/etc/nginx/conf.d/{{ item }}.conf"
+  with_items:
+    - app.ssl
+    - grafana.ssl
+  notify: reload nginx
+  tags: config
+
+- name: Add auto renew certificates
+  cron:
+    name: letsencrypt renew
+    minute: "0"
+    hour: "3"
+    day: "1"
+    job: letsencrypt renew
+  tags: config

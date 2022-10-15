@@ -1,0 +1,77 @@
+require './env'
+include Vars
+
+File.open("#{INVENTORY_FILE}", "w") { |f| }
+
+File.open("#{HOSTS_PUBLIC}", "w") { |f|
+  f << "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
+  f << "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
+  f << "\n"
+}
+
+File.open("#{HOSTS_PRIVATE}", "w") { |f|
+  f << "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n"
+  f << "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6\n"
+  f << "\n"
+}
+
+Vagrant.configure("2") do |config|
+  config.vm.box = VM_BOX
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.autostart = false
+    libvirt.cpus = 1
+    libvirt.memory = 1024
+  end
+
+  (1..VM_NUMBER).each do |i|
+    n = i - 1
+    if VM_ENABLE[n] == "1"
+      config.vm.define VM_NAME[n] do |node|
+        node.vm.network :private_network,
+          ip: "192.168.100.#{100 + i}",
+          libvirt__network_name: "vagrant-public"
+        node.vm.network :private_network,
+          ip: "192.168.200.#{200 + i}",
+          libvirt__network_name: "vagrant-private"
+
+        node.vm.provider :libvirt do |libvirt|
+          libvirt.title = VM_NAME[n]
+        end
+
+        node.vm.provider :libvirt do |libvirt|
+          libvirt.memory = VM_MEMORY[n]
+        end
+
+        File.open("#{HOSTS_PUBLIC}", "a") { |f| f.write "192.168.100.#{100 + i} #{VM_NAME[n]}\n" }
+        File.open("#{HOSTS_PRIVATE}", "a") { |f| f.write "192.168.200.#{200 + i} #{VM_NAME[n]}\n" }
+
+        File.open("#{INVENTORY_FILE}", "a") { |f|
+          f << "[#{VM_NAME[n]}]\n"
+          f << "192.168.100.#{100 + i}\n"
+          f << "\n"
+        }
+
+
+
+        if PROVISIONING == true
+          node.vm.provision "shell", inline: "apt update && apt -y install python-minimal python-pip"
+
+          node.vm.provision "ansible" do |ansible|
+            ansible.playbook = "deploy.yml"
+            ansible.vault_password_file = "/.ansible/rebrain-vault.pwd"
+            ansible.extra_vars = {
+              hostname: VM_NAME[n]
+            }
+          end
+        end
+
+
+      end
+    end
+  end
+
+  config.trigger.after :destroy do |trigger|
+    trigger.run = {inline: "rm -f #{HOSTS_PUBLIC} #{HOSTS_PRIVATE} #{INVENTORY_FILE} #{JENKINS_PASSWORD_FILE}"}
+  end
+end

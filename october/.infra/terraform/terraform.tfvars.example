@@ -1,0 +1,29 @@
+# aws_access = "xxx"
+# aws_secret = "xxx"
+# aws_region = "xxx"
+dns_zone = "nip.io"
+# dns_zone = "devops.rebrain.srwx.net"
+# app_name = "october"
+
+do_token = "xxx"
+tags = [ "module_devops", "task_jenkins", "jenkins", "S_Nord", "sergei_north_at_gmail_com" ]
+ssh_key_name = "ssh-nord"
+ssh_key_rebrain = "REBRAIN.SSH.PUB.KEY"
+
+os = "ubuntu-18-04-x64"
+region = "lon1"
+vps =  [ "proxy",       "logging",     "monitoring",  "app",         "cicd"]
+plan = [ "s-1vcpu-1gb", "s-1vcpu-2gb", "s-1vcpu-1gb", "s-1vcpu-1gb", "s-1vcpu-1gb" ]
+
+hosts_public = "export/hosts.public"
+hosts_private = "export/hosts.private"
+inventory_file = "export/inv.ini"
+url_file = "export/url.txt"
+nipio_file = "export/nip.io.yml"
+
+# PLAN
+# s-1vcpu-1gb
+# s-1vcpu-2gb
+# s-1vcpu-3gb
+# s-2vcpu-4gb
+# s-4vcpu-8gb

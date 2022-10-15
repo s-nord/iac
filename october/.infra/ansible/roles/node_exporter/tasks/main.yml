@@ -1,0 +1,30 @@
+- name: Download node_exporter
+  get_url:
+    url: https://github.com/prometheus/node_exporter/releases/download/v1.2.0/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+    dest: /opt/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+
+- name: Unarchive node_exporter
+  unarchive:
+    src: /opt/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+    dest: /opt
+    remote_src: yes
+
+- name: Create simlink
+  file:
+    src: /opt/node_exporter-{{ node_exporter_version }}.linux-amd64
+    dest: /opt/node_exporter
+    state: link
+
+- name: Add systemd service
+  template:
+    src: node_exporter.service
+    dest: /etc/systemd/system/node_exporter.service
+  notify: restart node_exporter
+  # tags: config
+
+- name: Start & Enable node_exporter daemon
+  systemd:
+    name: node_exporter
+    state: started
+    enabled: yes
+    daemon_reload: yes

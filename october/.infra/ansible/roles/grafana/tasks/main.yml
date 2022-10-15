@@ -1,0 +1,59 @@
+- name: Install requirements for grafana
+  apt:
+    name:
+      - adduser
+      - libfontconfig1
+    state: present
+
+- name: Download grafana
+  get_url:
+    url: https://dl.grafana.com/oss/release/grafana_{{ grafana_version }}_amd64.deb
+    dest: /opt/grafana_{{ grafana_version }}_amd64.deb
+
+- name: Install grafana
+  apt:
+    deb: /opt/grafana_{{ grafana_version }}_amd64.deb
+    state: present
+
+- name: Configure for running grafana on private interface
+  replace:
+    path: /etc/grafana/grafana.ini
+    regexp: ';http_addr ='
+    replace: "http_addr = {{ vars['ansible_' + private_interface].ipv4.address }}"
+  tags: config
+  notify: restart grafana
+
+- name: Start & Enable grafana daemon
+  systemd:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+- name: Waits for port 3000 open on private interface
+  wait_for:
+    host: "{{ vars['ansible_' + private_interface].ipv4.address }}"
+    port: 3000
+    delay: 60
+    state: drained
+
+- name: Set admin password
+  shell: grafana-cli admin reset-admin-password {{ grafana_password }}
+  tags: config
+
+- name: Export grafana password
+  local_action: copy content="{{ grafana_password }}\n" dest="../{{ enviroment }}/export/grafana_password.txt"
+  tags: config
+
+- name: Copy datasources
+  synchronize:
+    src: datasources
+    dest: /etc/grafana/provisioning/
+  notify: restart grafana
+  tags: config
+
+- name: Copy dashboards
+  synchronize:
+    src: dashboards
+    dest: /etc/grafana/provisioning/
+  notify: restart grafana
+  tags: config

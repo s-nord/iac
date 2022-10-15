@@ -1,0 +1,16 @@
+server {
+  listen 443 ssl;
+  server_name grafana.{{ app }}.{{ dns_zone }};
+
+  access_log /var/log/nginx/grafana.access.log;
+  error_log /var/log/nginx/grafana.error.log;
+
+  ssl on;
+  ssl_protocols TLSv1.3;
+  ssl_certificate /etc/letsencrypt/live/grafana.{{ app }}.{{ dns_zone }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/grafana.{{ app }}.{{ dns_zone }}/privkey.pem;
+  
+  location / {
+    proxy_pass http://monitoring:3000;
+  }
+}

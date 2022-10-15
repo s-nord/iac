@@ -1,0 +1,17 @@
+[Unit]
+Description=Postgres Exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+Type=simple
+ExecStart=/usr/bin/sudo -u postgres \
+  DATA_SOURCE_NAME="postgresql://{{ postgres_user }}:{{ postgres_password }}@localhost:5432/{{ postgres_db }}?sslmode=disable" \
+  /opt/postgres_exporter/postgres_exporter \
+  --auto-discover-databases \
+  --web.listen-address={{ vars['ansible_' + private_interface].ipv4.address }}:9187
+
+[Install]
+WantedBy=multi-user.target

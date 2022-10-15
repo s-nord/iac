@@ -1,0 +1,84 @@
+- name: Install packages
+  apt:
+    name:
+      - ansible
+      - pylint
+  tags: config
+
+- name: Add GitLab-Runner repository
+  shell: |
+    curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | sudo bash
+  args:
+    creates: /etc/apt/sources.list.d/runner_gitlab-runner.list
+
+- name: Install Runner
+  apt:
+    name: gitlab-runner
+    update_cache: yes
+
+- name: SSH client config
+  template:
+    src: ssh_config
+    dest: /etc/ssh/ssh_config
+    mode: 0644
+
+- name: Create .ssh directory for CICD user
+  file:
+    path: "{{ cicd_home }}/.ssh"
+    state: directory
+    owner: "{{ cicd_user }}"
+    group: "{{ cicd_user }}"
+    mode: 0700
+
+- name: SSH keys private for CICD user
+  template:
+    src: id_rsa
+    dest: "{{ cicd_home }}/.ssh/id_rsa"
+    owner: "{{ cicd_user }}"
+    group: "{{ cicd_user }}"
+    mode: 0600
+
+- name: SSH keys public for CICD user
+  template:
+    src: id_rsa.pub
+    dest: "{{ cicd_home }}/.ssh/id_rsa.pub"
+    owner: "{{ cicd_user }}"
+    group: "{{ cicd_user }}"
+    mode: 0644
+
+- name: SSH authorized_keys
+  template:
+    src: authorized_keys
+    dest: "{{ cicd_home }}/.ssh/authorized_keys"
+    owner: "{{ cicd_user }}"
+    group: "{{ cicd_user }}"
+    mode: 0644
+
+- name: Register shell runner
+  shell: |
+    gitlab-runner register \
+      --non-interactive \
+      --url "https://gitlab.rebrainme.com/" \
+      --registration-token "{{ gitlab_runner_token }}" \
+      --executor "shell" \
+      --description "shell-runner" \
+      --tag-list "shell" \
+      --run-untagged="true" \
+      --locked="false" \
+      --access-level="not_protected"
+  # tags: config
+
+# - name: Register docker runner
+#   shell: |
+#     gitlab-runner register \
+#       --non-interactive \
+#       --url "https://gitlab.rebrainme.com/" \
+#       --registration-token "{{ gitlab_runner_token }}" \
+#       --executor "docker" \
+#       --docker-image alpine:latest \
+#       --description "docker-runner" \
+#       --tag-list "docker" \
+#       --run-untagged="true" \
+#       --locked="false" \
+#       --access-level="not_protected"
+#   tags: config

@@ -1,0 +1,5 @@
+- systemd:
+    name: td-agent
+    state: restarted
+    daemon_reload: yes
+  listen: restart fluentd

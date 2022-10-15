@@ -1,0 +1,20 @@
+- name: Download GOLANG
+  get_url:
+    url: https://golang.org/dl/go{{ go_version }}.linux-amd64.tar.gz
+    dest: /root/go{{ go_version }}.linux-amd64.tar.gz
+
+- name: Unarchive GOLANG
+  unarchive:
+    src: /root/go{{ go_version }}.linux-amd64.tar.gz
+    dest: /usr/local
+    remote_src: yes
+
+- name: Copy file with GO enviroments
+  template:
+    src: go.sh
+    dest: /etc/profile.d/go.sh
+
+- name: Create GO folders
+  file:
+    path: "{{ go_path }}/src"
+    state: directory

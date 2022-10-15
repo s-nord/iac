@@ -1,0 +1,87 @@
+---
+- hosts: all
+  remote_user: root
+  gather_facts: no
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  tasks:
+  - name: Wait for connection
+    wait_for_connection:
+      delay: 0
+      timeout: 300
+
+  - name: Gathering facts
+    setup:
+
+  - name: Pause for 60 seconds
+    pause:
+      seconds: 60
+
+  - name: Set timezone
+    timezone:
+      name: Europe/Moscow
+
+  - name: Install packages
+    apt:
+      pkg:
+        - bc
+        - bzip2
+        - curl
+        - expect
+        - git
+        - htop
+        - iotop
+        - jq
+        - lynx
+        - mc
+        - nano
+        - nmap
+        - wget
+        - unzip
+      update_cache: yes
+
+  - name: SSH client config
+    copy:
+      src: files/etc/ssh/ssh_config
+      dest: /etc/ssh/ssh_config
+      mode: '0644'
+
+  - name: Create .ssh directory
+    file:
+      path: /root/.ssh
+      state: directory
+      mode: '0700'
+
+  - name: SSH keys private
+    copy:
+      src: files/root/.ssh/id_rsa
+      dest: /root/.ssh/id_rsa
+      mode: '0600'
+
+  - name: SSH keys public
+    copy:
+      src: files/root/.ssh/id_rsa.pub
+      dest: /root/.ssh/id_rsa.pub
+      mode: '0644'
+
+  - name: SSH authorized_keys
+    copy:
+      src: files/root/.ssh/authorized_keys
+      dest: /root/.ssh/authorized_keys
+      mode: '0644'
+
+  - name: Git config e-mail
+    shell: git config --global user.email "sergei.north@gmail.com"
+
+  - name: Git config e-mail
+    shell: git config --global user.name "Nord"
+
+  - name: Add bash color enviroment
+    copy:
+      src: etc/profile.d/bash_colors.sh
+      dest: /etc/profile.d/bash_colors.sh
+
+  - name: Add bash_color.sh to .bashrc
+    shell: echo 'source /etc/profile.d/bash_colors.sh' >> /root/.bashrc

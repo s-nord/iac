@@ -1,0 +1,52 @@
+- name: Create release directory
+  file:
+    path: /opt/{{ app }}/releases/{{ ansible_date_time.epoch }}
+    state: directory
+    owner: app
+    group: www-data
+    mode: 0770
+
+- name: Create a symbolic link
+  file:
+    src: /opt/{{ app }}/releases/{{ ansible_date_time.epoch }}
+    dest: /opt/{{ app }}/current
+    owner: app
+    group: www-data
+    state: link
+
+- name: Copy repository
+  synchronize:
+    src: ./../../../../../
+    dest: /opt/{{ app }}/current
+
+- name: Set permissions for PHP Composer
+  file:
+    path: /opt/{{ app }}/releases/{{ ansible_date_time.epoch }}
+    state: directory
+    owner: app
+    group: www-data
+    mode: 0770
+    recurse: yes
+
+- name: Install PHP requirements
+  shell: sudo -u app composer install
+  args:
+    chdir: /opt/{{ app }}/current
+
+- name: Set permissions for Nginx on app folder
+  file:
+    path: /opt/{{ app }}
+    state: directory
+    owner: app
+    group: www-data
+    mode: 0770
+    recurse: no
+
+- name: Set permissions for Nginx on current folder
+  file:
+    path: /opt/{{ app }}/releases/{{ ansible_date_time.epoch }}
+    state: directory
+    owner: app
+    group: www-data
+    mode: 0770
+    recurse: yes

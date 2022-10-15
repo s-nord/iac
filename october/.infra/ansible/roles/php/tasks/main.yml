@@ -1,0 +1,35 @@
+- name: Install PHP repository
+  apt_repository:
+    repo: ppa:ondrej/php
+
+- name: Install PHP {{ php_version }}
+  apt:
+    name:
+      - php{{ php_version }}
+      - php{{ php_version }}-fpm
+      - php{{ php_version }}-pgsql
+      - php{{ php_version }}-common
+      - php{{ php_version }}-opcache
+      - php{{ php_version }}-mcrypt
+      - php{{ php_version }}-cli
+      - php{{ php_version }}-gd
+      - php{{ php_version }}-curl
+      - php{{ php_version }}-mysql
+      - php{{ php_version }}-pgsql
+      - php{{ php_version }}-sqlite3
+      - php{{ php_version }}-mbstring
+      - php{{ php_version }}-xml
+      - php{{ php_version }}-pdo
+      - php{{ php_version }}-intl
+      - php{{ php_version }}-zip
+    update_cache: yes
+
+- name: Install PHP Composer
+  shell: |
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    php -r "if (hash_file('sha384', 'composer-setup.php') === '906a84df04cea2aa72f40b5f787e49f22d4c2f19492ac310e8cba5b96ac8b64115ac402c8cd292b8a03482574915d1a8') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+    php composer-setup.php
+    php -r "unlink('composer-setup.php');"
+    mv composer.phar /usr/local/bin/composer
+  args:
+    creates: /usr/local/bin/composer

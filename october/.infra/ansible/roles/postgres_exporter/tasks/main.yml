@@ -1,0 +1,31 @@
+- name: Download postgres_exporter
+  git:
+    repo: https://github.com/prometheus-community/postgres_exporter.git
+    dest: /opt/postgres_exporter
+
+- name: Build postgres_exporter
+  shell: |
+    source /etc/profile.d/go.sh
+    cd /opt/postgres_exporter
+    make build
+  args:
+    executable: /bin/bash
+    creates: /opt/postgres_exporter/postgres_exporter
+
+
+- name: Add postgres_exporter service
+  template:
+    src: postgres_exporter.service
+    dest: /etc/systemd/system/postgres_exporter.service
+    mode: 0600
+    owner: root
+    group: root
+  notify: restart postgres_exporter
+  tags: config
+
+- name: Start & Enable postgres_exporter daemon
+  systemd:
+    name: postgres_exporter.service
+    state: started
+    enabled: yes
+    daemon_reload: yes

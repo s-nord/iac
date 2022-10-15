@@ -1,0 +1,4 @@
+- name: Copy hosts file
+  template:
+    src: ../../../{{ enviroment }}/export/hosts.private
+    dest: /etc/hosts

@@ -1,0 +1,12 @@
+---
+- hosts: cicd
+  remote_user: root
+  gather_facts: yes
+  vars_files:
+    - vaults/vault.yml
+    - vars.yml
+  roles:
+    - system
+    - node_exporter
+    - gitlab-runner
+    

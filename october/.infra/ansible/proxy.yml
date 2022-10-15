@@ -1,0 +1,13 @@
+---
+- hosts: proxy
+  remote_user: root
+  gather_facts: yes
+  vars_files:
+    - vaults/vault.yml
+    - vars.yml
+    - ./../terraform/export/nip.io.yml
+  roles:
+    - system
+    - node_exporter
+    - nginx
+    - fluentd

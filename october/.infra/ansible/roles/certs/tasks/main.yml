@@ -1,0 +1,10 @@
+- name: Copy public part of common certificate
+  copy:
+    src: localhost.crt
+    dest: /etc/ssl/certs/localhost.crt
+
+- name: Copy private part of common certificate
+  copy:
+    src: localhost.key
+    dest: /etc/ssl/private/localhost.key
+  

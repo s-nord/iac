@@ -1,0 +1,35 @@
+stages:
+  - php
+  - linter
+  - prepare
+  - deploy
+
+php:
+  stage: php
+  tags:
+    - shell
+  script:
+    - ansible-playbook -i .infra/ansible/php.ini .infra/ansible/php.yml
+
+linter:
+  stage: linter
+  tags:
+    - shell
+  script:
+    - php --version
+    - composer -n --version
+    - while read -r line; do php -l $line; done < <(find ./ | grep '.php')    
+
+prepare:
+  stage: prepare
+  tags:
+    - shell
+  script:
+    - ansible-playbook -i .infra/ansible/app.ini .infra/ansible/app.prepare.yml
+
+deploy:
+  stage: deploy
+  tags:
+    - shell
+  script:
+    - ansible-playbook -i .infra/ansible/app.ini .infra/ansible/app.deploy.yml

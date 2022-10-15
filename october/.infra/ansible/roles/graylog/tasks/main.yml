@@ -1,0 +1,115 @@
+- name: Add bionic repository
+  apt_repository:
+    repo: "{{ item }}"
+  with_items:
+    - "deb http://archive.ubuntu.com/ubuntu/ bionic universe"
+    - "deb http://archive.ubuntu.com/ubuntu/ bionic-updates universe"
+    - "deb http://security.ubuntu.com/ubuntu/ bionic-security universe"
+
+- name: Install packages
+  apt:
+    name:
+      - apt-transport-https
+      - openjdk-8-jre-headless
+      - uuid-runtime
+      - pwgen
+    state: present
+    update_cache: yes
+
+- name: Add mongodb repository
+  shell: |
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+    echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/{{ mongodb_version }} multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-{{ mongodb_version }}.list
+  args:
+    creates: /etc/apt/sources.list.d/mongodb-org-{{ mongodb_version }}.list
+
+- name: Install mongodb
+  apt:
+    name: mongodb-org
+    state: present
+    update_cache: yes
+
+- name: Enable & Start mongodb daemon
+  systemd:
+    name: mongod
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Add elasticsearch key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Download elasticsearch
+  get_url:
+    url: https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}.deb
+    dest: /opt/elasticsearch-{{ elasticsearch_version }}-amd64.deb
+
+- name: Install elasticsearch
+  apt:
+    deb: /opt/elasticsearch-{{ elasticsearch_version }}-amd64.deb
+    state: present
+
+- name: Copy JVM options
+  template:
+    src: jvm.options
+    dest: /etc/elasticsearch/jvm.options
+  notify: restart elasticsearch
+  tags: config
+
+- name: Enable & start elasticsearch daemon
+  systemd:
+    name: elasticsearch
+    state: started
+    enabled: yes
+
+- name: Add graylog repository
+  apt:
+    deb: https://packages.graylog2.org/repo/packages/graylog-3.3-repository_latest.deb
+    state: present
+
+- name: Install graylog
+  apt:
+    name:
+      - graylog-server
+      - graylog-enterprise-plugins
+      - graylog-integrations-plugins
+      - graylog-enterprise-integrations-plugins
+    state: present
+    update_cache: yes
+
+- name: Copy graylog config
+  template:
+    src: server.conf
+    dest: /etc/graylog/server/server.conf
+  notify: restart graylog
+  tags: config
+
+- name: Enable & start graylog daemon
+  systemd:
+    name: graylog-server
+    state: started
+    enabled: yes
+
+# - name: Waits for port 9000 open on private interface
+#   wait_for:
+#     host: "{{ vars['ansible_' + private_interface].ipv4.address }}"
+#     port: 9000
+#     delay: 120
+#     state: started
+
+- name: Waits for port 9000 open on local interface
+  wait_for:
+    host: "127.0.0.1"
+    port: 9000
+    delay: 120
+    state: started
+
+# - name: Add input on  private interface
+#   shell: |
+#     curl -u admin:{{ graylog_password }} -H 'Content-Type: application/json' -X POST 'http://{{ vars['ansible_' + private_interface].ipv4.address }}:9000/api/system/inputs' -d '{ "title": "Standard GELF UDP input", "type": "org.graylog2.inputs.gelf.udp.GELFUDPInput", "global": true, "configuration": { "recv_buffer_size": 1048576, "tcp_keepalive": false, "use_null_delimiter": true, "number_worker_threads": 2, "tls_client_auth_cert_file": "", "bind_address": "{{ vars['ansible_' + private_interface].ipv4.address }}", "tls_cert_file": "", "decompress_size_limit": 8388608, "port": 12201, "tls_key_file": "", "tls_enable": false, "tls_key_password": "", "max_message_size": 2097152, "tls_client_auth": "disabled", "override_source": null }, "node": null }' -H 'X-Requested-By: cli'
+
+- name: Add input on localhost interface
+  shell: |
+    curl -u admin:{{ graylog_password }} -H 'Content-Type: application/json' -X POST 'http://127.0.0.1:9000/api/system/inputs' -d '{ "title": "Standard GELF UDP input", "type": "org.graylog2.inputs.gelf.udp.GELFUDPInput", "global": true, "configuration": { "recv_buffer_size": 1048576, "tcp_keepalive": false, "use_null_delimiter": true, "number_worker_threads": 2, "tls_client_auth_cert_file": "", "bind_address": "{{ vars['ansible_' + private_interface].ipv4.address }}", "tls_cert_file": "", "decompress_size_limit": 8388608, "port": 12201, "tls_key_file": "", "tls_enable": false, "tls_key_password": "", "max_message_size": 2097152, "tls_client_auth": "disabled", "override_source": null }, "node": null }' -H 'X-Requested-By: cli'

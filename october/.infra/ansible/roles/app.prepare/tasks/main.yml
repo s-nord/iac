@@ -1,0 +1,35 @@
+- name: Add app group
+  group:
+    name: app
+
+- name: Add app user
+  user:
+    name: app
+    group: app
+    shell: /bin/bash
+
+- name: Create app directory
+  file:
+    path: "/opt/{{ app }}"
+    state: directory
+    owner: app
+    group: app
+    mode: 0750
+
+- name: Install Nginx
+  apt:
+    name: nginx
+
+- name: Copy nginx.conf
+  template:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+  notify: restart nginx
+  tags: config
+
+- name: Copy app nginx configuration
+  template:
+    src: october.conf
+    dest: /etc/nginx/conf.d/october.conf
+  notify: restart nginx
+  tags: config

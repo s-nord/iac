@@ -1,0 +1,63 @@
+- name: Add postgresql repository
+  template:
+    src: pgdg.list
+    dest: /etc/apt/sources.list.d/pgdg.list
+
+- name: Add key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Update cache
+  apt:
+    update_cache: yes
+
+- name: Install postgresql
+  apt:
+    pkg: postgresql-{{ postgres_version }}
+
+- name: Add config file
+  template:
+    src: pg_hba.conf
+    dest: /etc/postgresql/13/main/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: 0640
+  notify: restart postgresql
+  tags: config
+
+- name: Install python packages
+  apt:
+    pkg:
+      - python-apt
+      - python-pip
+      - libpq-dev
+      - python3-dev
+
+- name: Install psycopg2
+  pip:
+    name: psycopg2
+
+- name: Add postgres database
+  postgresql_db:
+    name: "{{ postgres_db }}"
+  become: yes
+  become_user: postgres
+
+- name: Add postgres user
+  postgresql_user:
+    db: "{{ postgres_db }}"
+    name: "{{ postgres_user }}"
+    password: "{{ postgres_password }}"
+    priv: ALL
+    state: present
+  become: yes
+  become_user: postgres
+
+- name: Add user permissions
+  postgresql_user:
+    name: "{{ postgres_user }}"
+    role_attr_flags: NOSUPERUSER,NOCREATEDB
+    state: present
+  become: yes
+  become_user: postgres

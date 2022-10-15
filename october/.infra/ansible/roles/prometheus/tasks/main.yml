@@ -1,0 +1,45 @@
+- name: Download prometheus
+  get_url:
+    url: https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version}}/prometheus-{{prometheus_version}}.linux-amd64.tar.gz
+    dest: /opt/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz
+
+- name: Unarchive prometheus
+  unarchive:
+    src: /opt/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz
+    dest: /opt
+    remote_src: yes
+
+- name: Create simlink
+  file:
+    src: /opt/prometheus-{{ prometheus_version }}.linux-amd64
+    dest: /opt/prometheus
+    state: link
+
+- name: Create data directory
+  file:
+    path: /opt/prometheus/data
+    state: directory
+
+- name: Copy config files
+  template:
+    src: "{{ item }}.yml"
+    dest: "/opt/prometheus/{{ item }}.yml"
+  with_items:
+     - prometheus
+     # - alerts
+  notify: restart prometheus
+  tags: config
+
+- name: Add systemd service
+  template:
+    src: prometheus.service
+    dest: /etc/systemd/system/prometheus.service
+  notify: restart prometheus
+  tags: config
+
+- name: Start & Enable prometheus daemon
+  systemd:
+    name: prometheus
+    state: started
+    enabled: yes
+    daemon_reload: yes
